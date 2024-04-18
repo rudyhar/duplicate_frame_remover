@@ -1,7 +1,7 @@
 import cv2
 
 greyscale = True
-threshold = 83
+threshold = 40 # 83 for car vid gooseball
 
 def write_filtered_video(filtered_frames, output_filename):
   """Writes the filtered frames to a new video in MOV format."""
@@ -15,7 +15,7 @@ def write_filtered_video(filtered_frames, output_filename):
   out = cv2.VideoWriter(output_filename, fourcc, 25.0, (width, height))
   for frame in filtered_frames:
     out.write(frame)
-    cv2.imshow('frame', frame)
+    # cv2.imshow('frame', frame)   # displays finished vid
     c = cv2.waitKey(1)
     if c & 0xFF == ord('q'):
         break
@@ -32,6 +32,10 @@ def calculate_difference(frame1, frame2):
     M, N = frame1.shape[:2]  # Extract only height and width
 
   sum_diff = 0
+  # print(N,flush=True)
+  # print(M,flush=True)
+
+
   for i in range(M):
     for j in range(N):
         if greyscale:
@@ -50,44 +54,52 @@ def calculate_difference(frame1, frame2):
 
 def main():
   # Replace 'video.mp4' with your video filename
-  cap = cv2.VideoCapture('test.MOV')
+  for i in range(8):
+    filename = i + 1
+    filename = str(filename) + '.mp4'
+    print(filename)
 
-  if not cap.isOpened():
-    print("Error opening video!")
-    return
+    cap = cv2.VideoCapture('input/' + filename)
 
-  # Read the first frame for initialization
-  ret, prev_frame = cap.read()
-  if greyscale:
-    prev_frame = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+    if not cap.isOpened():
+      print("Error opening video!")
+      return
 
-  filtered_frames = []  # List to store filtered frames
-
-  while True:
-    ret, frame = cap.read()
-    if not ret:
-      break
-
-    current_frame = frame
+    # Read the first frame for initialization
+    ret, prev_frame = cap.read()
     if greyscale:
-        current_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      prev_frame = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
 
-    # Calculate difference and check against threshold
-    diff = calculate_difference(prev_frame, current_frame)
-    print(diff)
-    if diff > threshold:  # Keep frame if difference is below threshold
-      filtered_frames.append(frame.copy()) # store the RGB frame in the new vid list
-      print("new frame")
+    filtered_frames = []  # List to store filtered frames
+
+    while True:
+      ret, frame = cap.read()
+      if not ret:
+        break
+
+      current_frame = frame
+      if greyscale:
+          current_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+      # Calculate difference and check against threshold
+      diff = calculate_difference(prev_frame, current_frame)
+      print(diff)
+      if diff > threshold:  # Keep frame if difference is below threshold
+        filtered_frames.append(frame.copy()) # store the RGB frame in the new vid list
+        print("new frame")
 
 
 
-    prev_frame = current_frame.copy()  # Update previous frame
+      prev_frame = current_frame.copy()  # Update previous frame
 
-  cap.release()
-  cv2.destroyAllWindows()
+    cap.release()
+    cv2.destroyAllWindows()
 
-  # Write filtered frames to a new video
-  write_filtered_video(filtered_frames, "filtered_video.mp4")  # Change output filename
+    # Write filtered frames to a new video
+    new_file_name = "finals/fr_" + filename
+
+    write_filtered_video(filtered_frames, new_file_name)  # Change output filename
+
 
 if __name__ == "__main__":
   main()
